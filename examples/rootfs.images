@@ -1,0 +1,16 @@
+#!docker-build -c
+#
+# Use an existing root filesystem in a (packed) tar file to create a
+# docker image.
+
+import os
+
+def build_rootfs():
+    return os.system('make -f rootfs.makefile all')
+
+def clean_rootfs():
+    return os.system('make -f rootfs.makefile dist-clean')
+
+root_image = Image(rootfs='rootfs.tar', pre=build_rootfs)
+
+Image('my-app', cmd='/opt/my-app/bin/app', base=root_image)

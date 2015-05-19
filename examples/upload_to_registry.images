@@ -1,0 +1,13 @@
+#!docker-build -c
+#
+# Uploads official images to your private registry
+
+my_registry = Registry('localhost:5000')
+
+images = [
+    Image('ubuntu:14.04'),
+    Image('ubuntu:14.10'),
+    Image('ubuntu:15.04')]
+
+for image in images:
+    Image(image.repotag, base=image, registry=my_registry)

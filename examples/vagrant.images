@@ -1,0 +1,5 @@
+#!docker-build -c
+#
+# Use vagrant for provisioning a docker image
+
+Image('my-ubuntu-vg', vagrant='vagrant.Vagrantfile')
