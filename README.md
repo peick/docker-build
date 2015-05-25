@@ -1,9 +1,9 @@
 Docker-build is a command line tool for building docker images and uploading
 them to the registry. It extends the low level '''docker build''' by building
-images with usual a Dockerfile, Vagrantfile or a rootfs.
+images with a Dockerfile, Vagrantfile or a rootfs archive.
 
-Once built the image is uploaded to a registry, which could be the official
-registry or your private registry.
+Once built the image can be uploaded to a registry, which could be the official
+docker registry or your private registry.
 
 
 Sample build and upload
@@ -11,9 +11,25 @@ Sample build and upload
 
     $ docker-build
 
-docker-build.images and optionally docker-build.registry file must exist in the
+**docker-build.images** and optionally **docker-build.registry** file must exist in the
 current working directory.
 
+Alternatively you can set the image build file with:
+
+    $ docker-build -c my-images.config
+    
+The image configuration itself are pure python scripts with special meanings for builtin members *Image* and *Registry*. An *Image* can be one of:
+
+ * a native docker image. The already existing image is used as it is. If the image is not present locally it's pulled from the global registry or the defined registry:
+    Image('hello-world')
+    Image('hello-world', registry=my_registry)
+ * an image that uses an existing Dockerfile. The filename can differ from Dockerfile.
+ * an image that uses an existing Vagrantfile with docker as provider.
+ * an image created from an archive (tar, tar.bz2, tar.gz, tar.xz) that contains a root filesystem.
+ 
+Listing image before building them:
+
+    $ docker-build -l
 
 Registry configuration
 ======================
@@ -40,6 +56,7 @@ of the pathes:
 
 Example
 
+    # file: docker-build.registries
     staging = Registry('https://foo:bar@localhost:5000')
     qa      = Registry(user='foo', password='bar', host='localhost', port=5001)
 
@@ -51,6 +68,8 @@ ssh-server with a Dockerfile
 ----------------------------
 
     #!docker-build -c
+    #
+    # file: docker-build.images
     #
     # use the ubuntu image from the official registry to create an image that
     # runs a ssh server
@@ -71,6 +90,8 @@ upload to registry
 
     #!docker-build -c
     #
+    # file: docker-build.images
+    #
     # Uploads official images to your private registry
 
     my_registry = Registry('localhost:5000')
@@ -88,6 +109,8 @@ use vagrant for provisioning
 
     #!docker-build -c
     #
+    # file: docker-build.images
+    #
     # Use vagrant for provisioning a docker image
 
     Image('my-ubuntu-vg', vagrant='vagrant.Vagrantfile')
@@ -96,6 +119,8 @@ build from root filesystem
 --------------------------
 
     #!docker-build -c
+    #
+    # file: docker-build.images
     #
     # Use an existing root filesystem in a (packed) tar file to create a
     # docker image.
