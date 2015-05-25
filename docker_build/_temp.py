@@ -26,7 +26,6 @@ class TempDirectory(object):
 
     def __enter__(self):
         return self.create()
-        return self._temp
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.delete()
@@ -39,5 +38,4 @@ class TempDirectory(object):
     def delete(self):
         assert self._temp
         shutil.rmtree(self._temp)
-
 
