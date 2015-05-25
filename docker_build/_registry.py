@@ -1,5 +1,5 @@
-import urlparse
 import requests
+from ._compat import urlparse, urlunparse, to_ascii
 from . import _docker_driver
 
 
@@ -10,9 +10,9 @@ class RegistryURL(object):
                 raise ValueError('url is already set.')
 
             if not url.startswith('http://') and not url.startswith('https://'):
-                parsed   = urlparse.urlparse('//' + url)
+                parsed   = urlparse('//' + url)
             else:
-                parsed   = urlparse.urlparse(url)
+                parsed   = urlparse(url)
                 scheme   = parsed.scheme
             host     = parsed.hostname
             port     = parsed.port
@@ -64,16 +64,16 @@ class RegistryURL(object):
 
         scheme = self._scheme if with_scheme else None
 
-        url = urlparse.urlunparse([
-            scheme,
-            netloc,
-            self._path,
+        url = urlunparse([
+            to_ascii(scheme),
+            to_ascii(netloc),
+            to_ascii(self._path),
             None,
             None,
             None])
 
         if not scheme:
-            if url.startswith('//'):
+            if url.startswith(b'//'):
                 url = url[2:]
         return url
 

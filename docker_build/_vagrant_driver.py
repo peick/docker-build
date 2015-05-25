@@ -1,7 +1,8 @@
 import contextlib
 import re
-import _exec
-from ._exec import wrap_execution_error
+
+from . import _exec
+from ._exec import wrap_execution_error, ExecutionError
 
 
 class VagrantError(Exception):
@@ -30,7 +31,7 @@ def up(chdir=None):
 def destroy(chdir=None):
     try:
         _exec_vagrant_cmd('destroy', '-f', chdir=chdir)
-    except _exec.ExecutionError, error:
+    except ExecutionError as error:
         raise VagrantError(error)
 
 

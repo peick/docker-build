@@ -1,4 +1,3 @@
-import __builtin__
 import errno
 import imp
 import logging
@@ -21,9 +20,7 @@ def _format_exception(error, filename):
     """Format the exception :error: for the loaded python module :filename:.
     Does only print information that belong the loaded module itself.
     """
-    exc_type = sys.exc_type
-    exc_value = sys.exc_value
-    exc_tb = sys.exc_traceback
+    exc_type, exc_value, exc_tb = sys.exc_info()
     tbs = traceback.extract_tb(exc_tb)
 
     start_at = 0
@@ -54,14 +51,14 @@ class Builtins(object):
         self._registered = []
 
     def register(self, name, value):
-        if hasattr(__builtin__, name):
+        if name in __builtins__:
             raise KeyError('%s is already registered')
-        setattr(__builtin__, name, value)
+        __builtins__[name] = value
         self._registered.append(name)
 
     def cleanup(self):
         for name in self._registered:
-            delattr(__builtin__, name)
+            __builtins__.pop(name)
 
     def __enter__(self):
         return self
@@ -89,10 +86,9 @@ def _load_module(cwd, filename):
     with chdir(cwd or os.path.dirname(filename)):
         _check_file_exists(abspath)
 
-        sys.exc_clear()
         try:
             return imp.load_source(abspath, abspath)
-        except Exception, error:
+        except Exception as error:
             formatted = _format_exception(error, filename)
             raise FormattedException(formatted)
 

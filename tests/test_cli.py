@@ -36,7 +36,7 @@ def _run_cli(tmpdir, args, stdin=None):
     with Stdin() as stdin_wrapper:
         if stdin:
             stdin_temp = tempfile.NamedTemporaryFile(dir=tmpdir.strpath, delete=False)
-            stdin_temp.write(stdin)
+            stdin_temp.write(stdin.encode('utf-8'))
             stdin_temp.close()
             flexmock(stdin_wrapper).should_receive('read').and_return(stdin).once()
         else:

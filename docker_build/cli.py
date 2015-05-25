@@ -1,3 +1,4 @@
+from __future__ import print_function
 from optparse import OptionParser
 import errno
 import functools
@@ -6,10 +7,10 @@ import sys
 import tempfile
 import logging
 
-from _exec import ExecutionError
-from _registry import RegistryCollection
-from _image import ImageCollection, BaseImageLayer
-from _load_config import Builtins, load_config_file, load_registry_config_file, FormattedException
+from ._exec import ExecutionError
+from ._registry import RegistryCollection
+from ._image import ImageCollection, BaseImageLayer
+from ._load_config import Builtins, load_config_file, load_registry_config_file, FormattedException
 
 
 _MAIN_FILENAME     = 'docker-build.images'
@@ -120,23 +121,23 @@ def main(args=None):
             if options.dockerbuild == '-':
                 dockerbuild = sys.stdin.read()
                 with tempfile.NamedTemporaryFile(delete=True) as temp:
-                    temp.write(dockerbuild)
+                    temp.write(dockerbuild.encode('utf-8'))
                     temp.flush()
                     bound_load_config_file(temp.name, cwd=cwd)
             else:
                 bound_load_config_file(options.dockerbuild)
 
-    except FormattedException, error:
+    except FormattedException as error:
         _log.error(error.args[0])
         sys.exit(1)
-    except IOError, error:
+    except IOError as error:
         if error.errno == errno.ENOENT:
             _log.error('%s: %s', error.strerror, error.filename)
             sys.exit(1)
         raise
 
     if not image_collection.images:
-        print >>sys.stderr, "No images defined."
+        print("No images defined.", file=sys.stderr)
         sys.exit(1)
 
     if options.check_only:
@@ -146,7 +147,7 @@ def main(args=None):
         for image in image_collection.images:
             is_uploaded = image.is_uploaded()
             present = '+' if is_uploaded else '-'
-            print present, image.full_repotag
+            print(present, image.full_repotag)
         sys.exit(0)
 
     # build images and upload to registry
@@ -158,7 +159,7 @@ def main(args=None):
             image.build()
             cleanup.append(image)
             image.upload_to_registry()
-        except ExecutionError, error:
+        except ExecutionError as error:
             _log.error('While building image %s. %s', image.full_repotag, error)
             retval = 1
             break
@@ -167,7 +168,7 @@ def main(args=None):
     for image in cleanup:
         try:
             image.cleanup()
-        except Exception, error:
+        except Exception as error:
             _log.error(error)
             retval = 1
 

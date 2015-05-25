@@ -9,6 +9,7 @@ import string
 import tempfile
 
 from . import _docker_driver, _vagrant_driver
+from ._compat import to_utf8
 from ._temp import TempDirectory, TempFileLink
 from ._exec import chdir
 
@@ -209,7 +210,7 @@ class DockerfileDirectImageLayer(BaseImageLayer):
                 if v is not None:
                     content.append('%s %s' % (field_name, v))
 
-        return '\n'.join(content)
+        return to_utf8('\n'.join(content))
 
     def _build(self):
         with tempfile.NamedTemporaryFile(delete=True, dir=self._cwd) as temp:
