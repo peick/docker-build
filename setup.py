@@ -2,7 +2,7 @@
 from setuptools import setup
 
 setup(name='docker-build',
-      version='0.1.1a2',
+      version='0.1.1a3',
       description='Advanced docker image build tool',
       author='Michael Peick',
       author_email='docker-build@n-pq.de',

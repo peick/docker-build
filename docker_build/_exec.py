@@ -47,12 +47,14 @@ def exec_cmd(binary, *command_args, **kwargs):
         cmd = '%s < %s' % (cmd, stdin)
     if chdir:
         cmd = 'cd %s && %s' % (chdir, cmd)
+    cmd += ' 2>&1'
     _log.debug(cmd)
 
     try:
-        output = subprocess.check_output(cmd)
+        output = subprocess.check_output(cmd, shell=True)
         returncode = 0
     except subprocess.CalledProcessError as error:
+        output = ''
         returncode = error.returncode
         if not can_fail:
             raise ExecutionError(cmd, returncode, output)
