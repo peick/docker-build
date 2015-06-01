@@ -11,6 +11,7 @@ def build_rootfs():
 def clean_rootfs():
     return os.system('make -f rootfs.makefile dist-clean')
 
-root_image = Image(rootfs='rootfs.tar', pre=build_rootfs)
+# anonymous image
+root_image = Image(rootfs='rootfs.tar', pre=build_rootfs, post=clean_rootfs)
 
 Image('my-app', cmd='/opt/my-app/bin/app', base=root_image)

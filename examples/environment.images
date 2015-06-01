@@ -1,0 +1,12 @@
+#!docker-build -c
+#
+# Uses environment variables.
+#
+# Example call:
+#   REVISION=1.2.3 ./environment.images
+
+import os
+
+revision = os.environ['REVISION']
+
+Image('hello-world:%s' % revision, base=Image('hello-world'))

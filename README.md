@@ -17,7 +17,7 @@ current working directory.
 Alternatively you can set the image build file with:
 
     $ docker-build -c my-images.config
-    
+
 The image configuration itself are pure python scripts with special meanings for builtin members *Image* and *Registry*. An *Image* can be one of:
 
  * a native docker image. The already existing image is used as it is. If the image is not present locally it's pulled from the global registry or the defined registry:
@@ -26,7 +26,7 @@ The image configuration itself are pure python scripts with special meanings for
  * an image that uses an existing Dockerfile. The filename can differ from Dockerfile.
  * an image that uses an existing Vagrantfile with docker as provider.
  * an image created from an archive (tar, tar.bz2, tar.gz, tar.xz) that contains a root filesystem.
- 
+
 Listing image before building them:
 
     $ docker-build -l
@@ -125,5 +125,14 @@ build from root filesystem
     # Use an existing root filesystem in a (packed) tar file to create a
     # docker image.
 
-    Image('my-app', rootfs='rootfs.tar')
+    def build_rootfs():
+        return os.system('make -f rootfs.makefile all')
+
+    def clean_rootfs():
+        return os.system('make -f rootfs.makefile dist-clean')
+
+    # anonymous image
+    root_image = Image(rootfs='rootfs.tar', pre=build_rootfs, post=clean_rootfs)
+
+    Image('my-app', cmd='/opt/my-app/bin/app', base=root_image)
 
