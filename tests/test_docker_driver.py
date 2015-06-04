@@ -91,8 +91,9 @@ def test_rm_no_force():
 
 def test_rmi_force():
     flexmock(_exec).should_receive('exec_cmd') \
-        .with_args('docker', 'rmi', 'abcd', '-f', can_fail=True) \
-        .and_return(2, 'x').once()
+        .with_args('docker', 'rmi', '-f', 'abcd', can_fail=True) \
+        .and_return(0, 'x') \
+        .and_return(2, 'x')
     result = _docker_driver.rmi('abcd')
     assert result == 2
 

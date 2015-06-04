@@ -9,8 +9,13 @@ import logging
 
 from ._exec import ExecutionError
 from ._registry import RegistryCollection
-from ._image import ImageCollection, BaseImageLayer
-from ._load_config import Builtins, load_config_file, load_registry_config_file, FormattedException
+from ._image import ImageCollection
+from ._image_builder import ImageBuilder
+from ._load_config import (
+    Builtins,
+    load_config_file,
+    load_registry_config_file,
+    FormattedException)
 
 
 _MAIN_FILENAME     = 'docker-build.images'
@@ -136,7 +141,7 @@ def main(args=None):
             sys.exit(1)
         raise
 
-    if not image_collection.images:
+    if not len(image_collection):
         print("No images defined.", file=sys.stderr)
         sys.exit(1)
 
@@ -144,35 +149,17 @@ def main(args=None):
         return
 
     if options.list_images:
-        for image in image_collection.images:
+        for image in image_collection.tagged_images():
             is_uploaded = image.is_uploaded()
             present = '+' if is_uploaded else '-'
             print(present, image.full_repotag)
         sys.exit(0)
 
-    # build images and upload to registry
-    cleanup = []
-    retval = None
-    for image in image_collection.images:
-        _log.info('Building image: %s', image.full_repotag)
-        try:
-            image.build()
-            cleanup.append(image)
-            image.upload_to_registry()
-        except ExecutionError as error:
-            _log.error('While building image %s. %s', image.full_repotag, error)
-            retval = 1
-            break
 
-    _log.debug('cleanup temporary images')
-    for image in cleanup:
-        try:
-            image.cleanup()
-        except Exception as error:
-            _log.error(error)
-            retval = 1
+    builder = ImageBuilder(options, image_collection)
+    retval = builder.build()
 
-    if retval:
+    if not retval:
         sys.exit(1)
 
 

@@ -89,5 +89,6 @@ def test_stdin_bad_config(tmpdir, stdin):
 ])
 def test_build(tmpdir, filename):
     flexmock(BaseImageLayer).should_receive('build').once()
+    flexmock(BaseImageLayer).should_receive('is_uploaded').and_return(False).once()
     flexmock(BaseImageLayer).should_receive('upload_to_registry').once()
     _run_cli(tmpdir, ['-c', filename])

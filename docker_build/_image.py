@@ -62,7 +62,9 @@ class BaseImageLayer(object):
         temp_repotag_template=_DEFAULT_TEMP_REPO,
         cwd=None):
 
+        self.children = []
         self._cwd = cwd or os.getcwd()
+        self._deletable = True
 
         if repotag is None:
             repotag = _expand_repotag(temp_repotag_template)
@@ -78,6 +80,9 @@ class BaseImageLayer(object):
         self._registry = registry
         self._base = base
 
+        if self._base:
+            self._base.add_child(self)
+
         self._driver = _docker_driver
         self._already_built = False
         self._image_id = None
@@ -86,6 +91,14 @@ class BaseImageLayer(object):
             self.full_repotag = registry.repotag_url(repotag)
         else:
             self.full_repotag = repotag
+
+
+    def is_root(self):
+        return self._base is None
+
+
+    def add_child(self, child_image):
+        self.children.append(child_image)
 
 
     def _commit(self, container_id):
@@ -113,19 +126,21 @@ class BaseImageLayer(object):
     def cleanup(self):
         """Remove temporary image.
         """
-        if self._is_temporary:
+        if self._is_temporary and self._already_built:
             self._driver.rmi(self.repotag, force=True)
 
+
     def upload_to_registry(self):
-        assert self._already_built
         if self._is_temporary:
             return
         if not self._registry:
             return
 
+        assert self._already_built
         with self._registry:
             self._registry.delete_tag(self.repotag)
             self._registry.post(self._image_id, self.repotag)
+
 
     def is_uploaded(self):
         if self._is_temporary:
@@ -135,6 +150,27 @@ class BaseImageLayer(object):
             return inspection is not None
 
         return self._registry.info(self.repotag) is not None
+
+
+    def is_temporary(self):
+        return self._is_temporary
+
+
+    def delete(self):
+        if not self._deletable:
+            return
+        if not self.is_uploaded():
+            return
+        if self._registry:
+            _log.warn('not supported yet.')
+            return
+
+        inspection = self._driver.inspect(self.repotag)
+        image_id = inspection['Id']
+        self._driver.rmi(image_id)
+        return True
+
+
 
 
 class FixBuildfileImageLayer(BaseImageLayer):
@@ -249,6 +285,7 @@ class NativeDockerImageLayer(BaseImageLayer):
         assert repotag, "Missing repotag"
         super(NativeDockerImageLayer, self).__init__(
             repotag=repotag, registry=registry, base=base)
+        self._deletable = False
 
 
     def _build(self):
@@ -261,12 +298,10 @@ class NativeDockerImageLayer(BaseImageLayer):
             self._driver.tag(self._image_id, self.repotag)
 
     def _pull(self):
-        fmt = '{{.Id}}'
-
-        inspection = self._driver.inspect(self.full_repotag, format=fmt)
+        inspection = self._driver.inspect_id(self.full_repotag)
         if inspection is None:
             self._driver.pull(self.full_repotag)
-            inspection = self._driver.inspect(self.full_repotag, format=fmt)
+            inspection = self._driver.inspect_id(self.full_repotag)
 
         assert inspection
         self._image_id = inspection
@@ -339,10 +374,41 @@ def create_image(repotag=None, **kwargs):
 
 class ImageCollection(object):
     def __init__(self):
-        self.images = []
+        self._images = []
+
+
+    def __iter__(self):
+        for image in self._images:
+            yield image
+
 
     def add(self, *args, **kwargs):
         image = create_image(*args, **kwargs)
-        self.images.append(image)
+        self._images.append(image)
         return image
 
+
+    @property
+    def root_images(self):
+        images = []
+        for image in self._images:
+            if image.is_root():
+                images.append(image)
+        return images
+
+
+    def _tagged_images(self, images):
+        tagged = []
+        for image in images:
+            if not image.is_temporary():
+                tagged.append(image)
+            tagged.extend(self._tagged_images(image.children))
+        return tagged
+
+
+    def tagged_images(self):
+        return self._tagged_images(self.root_images)
+
+
+    def __len__(self):
+        return len(self._images)

@@ -8,7 +8,7 @@ def test_build():
     image = NativeDockerImageLayer('test/sample')
 
     image._driver = flexmock()
-    image._driver.should_receive('inspect') \
+    image._driver.should_receive('inspect_id') \
         .and_return(None) \
         .and_return('abcd')
     image._driver.should_receive('pull').once()
@@ -23,7 +23,7 @@ def test_build_existing():
     image = NativeDockerImageLayer('test/sample')
 
     image._driver = flexmock()
-    image._driver.should_receive('inspect').and_return('abcd').once()
+    image._driver.should_receive('inspect_id').and_return('abcd').once()
 
     image.build()
 

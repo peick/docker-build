@@ -30,7 +30,10 @@ def test_build(tmpdir, datadir, docker_filename, docker_dir_or_file):
 
 
 def test_build_direct():
-    base = flexmock(build=lambda: None, _image_id='b7722e0317a4')
+    base = flexmock(
+        build=lambda: None,
+        _image_id='b7722e0317a4',
+        add_child=lambda child: None)
     layer = DockerfileDirectImageLayer(base=base, cmd='pwd')
 
     fake_layer = flexmock(_image_id='abcdef')

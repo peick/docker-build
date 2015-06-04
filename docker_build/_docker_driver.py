@@ -1,8 +1,12 @@
 import json
+import logging
 import os
 import re
 
 from . import _exec
+
+
+_log = logging.getLogger(__name__)
 
 
 def _exec_docker_cmd(command, *args, **kwargs):
@@ -57,6 +61,10 @@ def inspect(container_id, format=None):
         return output
 
 
+def inspect_id(what):
+    return inspect(what, '{{.Id}}')
+
+
 def login(registry, username, password, email=' '):
     """Executes ``docker login ...``.
     """
@@ -96,7 +104,14 @@ def rmi(repotag, force=True):
     """Executes ``docker rmi``.
     """
     if force:
-        return _exec_docker_cmd('rmi', repotag, '-f', can_fail=True)[0]
+        while True:
+            status, output = _exec_docker_cmd(
+                'rmi', '-f', repotag, can_fail=True)
+            if not status:
+                _log.debug('>> ' + output)
+            if status:
+                break
+        return status
     else:
         _exec_docker_cmd('rmi', repotag)
 
