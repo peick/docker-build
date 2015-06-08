@@ -6,7 +6,8 @@ import sys
 import traceback
 
 from ._exec import chdir
-from ._image import BaseImageLayer
+from ._registry import Registry
+from .image.api import BaseImageLayer
 
 
 _log = logging.getLogger(__name__)
@@ -123,3 +124,4 @@ def load_config_file(builtins, path, cwd=None):
             builtins.register(name, value)
 
     return module
+

@@ -2,7 +2,7 @@ from flexmock import flexmock
 import pytest
 
 from docker_build import _docker_driver
-from docker_build._image import DockerfileImageLayer, DockerfileDirectImageLayer
+from docker_build.image.api import DockerfileImageLayer, DockerfileDirectImageLayer
 
 
 @pytest.mark.parametrize('docker_filename, docker_dir_or_file', [

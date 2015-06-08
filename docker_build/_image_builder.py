@@ -1,4 +1,5 @@
 import logging
+from ._exec import ExecutionError
 
 
 _log = logging.getLogger(__name__)

@@ -2,10 +2,7 @@ import os
 import pytest
 from flexmock import flexmock
 
-from docker_build._image import (
-    RootFSLayer,
-    VagrantLayer,
-    )
+from docker_build.image.api import RootFSLayer, VagrantLayer
 
 
 def test_vagrant_layer_missing_argument():

@@ -7,7 +7,7 @@ from flexmock import flexmock
 import pytest
 
 import docker_build.cli
-from docker_build._image import BaseImageLayer
+from docker_build.image.api import BaseImageLayer
 
 
 class Stdin(object):

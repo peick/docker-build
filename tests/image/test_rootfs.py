@@ -1,7 +1,7 @@
 from flexmock import flexmock
 import pytest
 
-from docker_build._image import RootFSLayer
+from docker_build.image.api import RootFSLayer
 
 
 def test_build():

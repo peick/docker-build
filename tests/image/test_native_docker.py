@@ -1,7 +1,7 @@
 from flexmock import flexmock
 
 from docker_build import _docker_driver
-from docker_build._image import NativeDockerImageLayer
+from docker_build.image.api import NativeDockerImageLayer
 
 
 def test_build():

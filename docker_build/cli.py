@@ -7,9 +7,9 @@ import sys
 import tempfile
 import logging
 
+from .image.api import ImageCollection
 from ._exec import ExecutionError
 from ._registry import RegistryCollection
-from ._image import ImageCollection
 from ._image_builder import ImageBuilder
 from ._load_config import (
     Builtins,

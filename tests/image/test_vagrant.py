@@ -3,7 +3,7 @@ from flexmock import flexmock
 import pytest
 
 from docker_build import _docker_driver, _vagrant_driver
-from docker_build._image import VagrantLayer
+from docker_build.image.api import VagrantLayer
 
 
 @contextlib.contextmanager
