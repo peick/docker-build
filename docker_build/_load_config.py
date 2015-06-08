@@ -87,8 +87,9 @@ def _load_module(cwd, filename):
     with chdir(cwd or os.path.dirname(filename)):
         _check_file_exists(abspath)
 
+        name = abspath.replace('.', '_')
         try:
-            return imp.load_source(abspath, abspath)
+            return imp.load_source(name, abspath)
         except Exception as error:
             formatted = _format_exception(error, filename)
             raise FormattedException(formatted)
