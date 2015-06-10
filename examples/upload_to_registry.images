@@ -5,9 +5,9 @@
 my_registry = Registry('localhost:5000')
 
 images = [
-    Image('ubuntu:14.04'),
-    Image('ubuntu:14.10'),
-    Image('ubuntu:15.04')]
+    Image('hello-world'),
+    Image('ubuntu-debootstrap:14.04'),
+    Image('ubuntu-debootstrap:12.04')]
 
 for image in images:
     Image(image.repotag, base=image, registry=my_registry)

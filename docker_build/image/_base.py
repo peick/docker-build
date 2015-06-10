@@ -143,8 +143,8 @@ class BaseImageLayer(object):
         if self._is_temporary:
             return
         if not self._registry:
-            inspection = self._driver.inspect(self.repotag)
-            return inspection is not None
+            image_id = self._driver.inspect_id(self.repotag)
+            return image_id is not None
 
         return self._registry.info(self.repotag) is not None
 
@@ -162,8 +162,7 @@ class BaseImageLayer(object):
             _log.warn('not supported yet.')
             return
 
-        inspection = self._driver.inspect(self.repotag)
-        image_id = inspection['Id']
+        image_id = self._driver.inspect_id(self.repotag)
         self._driver.rmi(image_id)
         return True
 

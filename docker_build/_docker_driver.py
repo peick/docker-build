@@ -62,7 +62,7 @@ def inspect(container_id, format=None):
 
 
 def inspect_id(what):
-    return inspect(what, '{{.Id}}')
+    return inspect(what, '{{.Id}}').strip()
 
 
 def login(registry, username, password, email=' '):

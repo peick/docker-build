@@ -4,5 +4,5 @@
 .coverage
 
 dist/
-.tox/
+.tox
 *.egg-info/

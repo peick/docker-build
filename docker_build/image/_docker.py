@@ -101,11 +101,11 @@ class NativeDockerImageLayer(BaseImageLayer):
             self._driver.tag(self._image_id, self.repotag)
 
     def _pull(self):
-        inspection = self._driver.inspect_id(self.full_repotag)
-        if inspection is None:
+        image_id = self._driver.inspect_id(self.full_repotag)
+        if image_id is None:
             self._driver.pull(self.full_repotag)
-            inspection = self._driver.inspect_id(self.full_repotag)
+            image_id = self._driver.inspect_id(self.full_repotag)
 
-        assert inspection
-        self._image_id = inspection
+        assert image_id
+        self._image_id = image_id
 
