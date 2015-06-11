@@ -3,6 +3,7 @@ from optparse import OptionParser
 import errno
 import functools
 import os
+import re
 import sys
 import tempfile
 import logging
@@ -33,7 +34,7 @@ def _get_cli_arguments(args=None):
         action  = 'count',
         default = 0)
     parser.add_option('-r', '--registry',
-        help    = 'Docker registry url, e.g. https://foo:bar@localhost:5000',
+        help    = 'Docker registry url, e.g. qa=https://foo:bar@localhost:5000',
         metavar = 'URL',
         dest    = 'registry',
         action  = 'append',
@@ -68,10 +69,17 @@ def _get_cli_arguments(args=None):
         dest    = 'force',
         action  = 'store_true',
         default = False)
+    parser.add_option('--list-registry-images',
+        help    = 'List images of a registry',
+        dest    = 'registry_list_images')
 
     options, _args = parser.parse_args(args)
 
     _fix_default_cli_arguments(options)
+
+    for desc in options.registry:
+        if not re.match(r'[a-zA-Z_][a-zA-Z0-9_]*=.*', desc):
+            parser.error('-r %s must be in format <name>=<url>' % desc)
 
     return options
 
@@ -96,7 +104,6 @@ def _configure_logging(options):
 
 
 def main(args=None):
-    # TODO use force option
     options = _get_cli_arguments(args)
     _configure_logging(options)
 
@@ -120,7 +127,20 @@ def main(args=None):
 
             # optional: load registries
             for filename in options.registry_config:
-                load_registry_config_file(filename)
+                bound_load_registry_config_file(filename)
+
+            # optional: load registries directly from command line
+            for desc in options.registry:
+                name, url = desc.split('=', 1)
+                registry = registry_collection.add(url)
+                builtins.register(name, registry)
+
+            if options.registry_list_images:
+                # variables are injected into builtins
+                registry = __builtins__[options.registry_list_images]
+                for repotag in registry.images():
+                    print(repotag)
+                return
 
             # load image description
             if options.dockerbuild == '-':

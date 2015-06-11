@@ -157,6 +157,38 @@ class Registry(RegistryURL):
         if response.ok:
             return response.json()
 
+    def repositories(self):
+        """Fetch a list of repositories.
+        """
+        url = '%s/v1/search' % (self.url, )
+        response = self._http.get(url)
+        if not response.ok:
+            raise Exception(response)
+        data = response.json()
+
+        repositories = []
+        for item in data['results']:
+            repositories.append(item['name'])
+        return repositories
+
+    def images(self):
+        """Fetch a list of images.
+        """
+        repositories = self.repositories()
+
+        images = []
+        for repo in repositories:
+            url = '%s/v1/repositories/%s/tags' % (self.url, repo)
+            response = self._http.get(url)
+            if not response.ok:
+                raise Exception(response)
+            data = response.json()
+
+            for tag in data.keys():
+                image = '%s:%s' % (repo, tag)
+                images.append(self.repotag_url(image))
+        return images
+
 
 class RegistryCollection(object):
     def __init__(self):

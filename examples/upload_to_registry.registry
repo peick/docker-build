@@ -1,0 +1,4 @@
+# this registry definition file can be used with the build script
+#  `upload_to_registry.images` if my_registry is uncommented there.
+
+my_registry = Registry('localhost:5000')
