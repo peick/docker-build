@@ -1,10 +1,15 @@
 Docker-build is a command line tool for building docker images and uploading
-them to the registry. It extends the low level '''docker build''' by building
+them to the registry. It extends the low level *docker build* by building
 images with a Dockerfile, Vagrantfile or a rootfs archive.
 
 Once built the image can be uploaded to a registry, which could be the official
 docker registry or your private registry.
 
+Getting started - Installation
+==============================
+    $ virtualenv venv
+    $ source venv/bin/activate
+    $ pip install docker-build
 
 Sample build and upload
 =======================
@@ -35,11 +40,9 @@ Registry configuration
 ======================
 
 There are two ways to configure registries. Either by command line argument
-'''-r''' or in a registry configuration file.
+*-r* or in a registry configuration file with the argument *--rc*.
 
-    $ docker-build -r https://foo:bar@localhost:5000
-
-    $ docker-build -r staging:localhost:5000
+    $ docker-build -r staging=localhost:5000
 
     $ docker-build --rc Dockerbuild.registries
 
@@ -47,7 +50,7 @@ There are two ways to configure registries. Either by command line argument
 Registry configuration file
 ---------------------------
 
-Registries can be defined in the file '''docker-build.registry''' in the same
+Registries can be defined in the file **docker-build.registry** in the same
 folder where the docker-build.images can be found or as global settings in one
 of the pathes:
 
@@ -136,3 +139,19 @@ build from root filesystem
 
     Image('my-app', cmd='/opt/my-app/bin/app', base=root_image)
 
+with environment variables
+--------------------------
+
+    #!docker-build -c
+    #
+    # Uses environment variables.
+    #
+    # Example call:
+    #   REVISION=1.2.3 ./environment.images
+    #   REVISION=2.3.4 docker-build -c environment.images
+    
+    import os
+    
+    revision = os.environ['REVISION']
+    
+    Image('hello-world:%s' % revision, base=Image('hello-world'))
