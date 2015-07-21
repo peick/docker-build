@@ -2,19 +2,21 @@ import logging
 import os
 import pipes
 import subprocess
+import threading
 
 
 _log = logging.getLogger(__name__)
 
 
 class ExecutionError(Exception):
-    def __init__(self, cmd, status, output):
+    def __init__(self, cmd, status, stdout, stderr):
         self.command = cmd
         self.status = status
-        self.output = output
+        self.stdout = stdout
+        self.stderr = stderr
 
     def __str__(self):
-        indented = ['  %s' % s for s in self.output.splitlines()]
+        indented = ['  %s' % s for s in self.stderr.splitlines()]
         indented = '\n'.join(indented)
         return 'Execution failed for %s:\n%s' % (self.command, indented)
 
@@ -36,33 +38,80 @@ def wrap_execution_error(exc_type):
     return _deco
 
 
+def _readerthread(fh, logger, out):
+    while True:
+        data = fh.read()
+        if not data:
+            break
+        if logger:
+            logger(data)
+        out.append(data)
+
+
+def _communicate(popen, stdin=None):
+    logger = None
+
+    stdout = []
+    stderr = []
+
+    stdout_thread = threading.Thread(target=_readerthread,
+                                     args=(popen.stdout, logger, stdout))
+    stderr_thread = threading.Thread(target=_readerthread,
+                                     args=(popen.stderr, logger, stderr))
+
+    stdout_thread.setDaemon(True)
+    stderr_thread.setDaemon(True)
+
+    stdout_thread.start()
+    stderr_thread.start()
+
+    if stdin is not None:
+        if hasattr(stdin, 'read'):
+            stdin_data = stdin.read()
+        else:
+            stdin_data = stdin
+        popen.stdin.write(stdin_data)
+        popen.stdin.close()
+
+    stdout_thread.join()
+    stderr_thread.join()
+
+    stdout = b''.join(stdout)
+    stderr = b''.join(stderr)
+
+    popen.wait()
+    return (popen.returncode, stdout, stderr)
+
+
 def exec_cmd(binary, *command_args, **kwargs):
-    chdir = kwargs.get('chdir', None)
+    #chdir = kwargs.get('chdir', None)
     can_fail = kwargs.get('can_fail', False)
     stdin = kwargs.get('stdin', None)
 
-    args = [pipes.quote(arg) for arg in command_args]
-    cmd  = '%s %s' % (binary, ' '.join(args))
-    if stdin:
-        cmd = '%s < %s' % (cmd, stdin)
-    if chdir:
-        cmd = 'cd %s && %s' % (chdir, cmd)
-    cmd += ' 2>&1'
-    _log.debug(cmd)
-
+    stdin_pipe = subprocess.PIPE if stdin else None
     try:
-        output = subprocess.check_output(cmd, shell=True)
-        returncode = 0
-    except subprocess.CalledProcessError as error:
-        output = ''
-        returncode = error.returncode
-        if not can_fail:
-            raise ExecutionError(cmd, returncode, output)
+        popen = subprocess.Popen([binary] + list(command_args),
+                                 close_fds=True,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 stdin=stdin_pipe)
+    except os.error as error:
+        status = -1
+        stdout = None
+        stderr = str(error)
+        if can_fail:
+            return (status, stdout, stderr)
+        raise ExecutionError(binary, status, stdout, stdout)
+
+    status, stdout, stderr = _communicate(popen, stdin)
+
+    if not can_fail and status:
+        raise ExecutionError(binary, status, stdout, stderr)
 
     if can_fail:
-        return returncode, output
+        return status, output
 
-    return output
+    return stdout
 
 
 class chdir(object):

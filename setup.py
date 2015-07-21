@@ -9,7 +9,8 @@ setup(name='docker-build',
       url='',
       packages=['docker_build'],
       install_requires=[
-          'requests>=2.7.0'
+          'requests>=2.7.0',
+          'six>=1.9.0'
       ],
       entry_points={
           'console_scripts': [

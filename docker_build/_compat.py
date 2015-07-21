@@ -1,7 +1,9 @@
-try:
-    from urllib.parse import urlparse, urlunparse
-except ImportError:
+import six
+
+if six.PY2:
     from urlparse import urlparse, urlunparse
+else:
+    from urllib.parse import urlparse, urlunparse
 
 
 def to_utf8(value):

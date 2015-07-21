@@ -25,7 +25,7 @@ this command on. A final option is to change to a directory with a
 Vagrantfile and to try again.
 """
 
-_execution_error = _exec.ExecutionError('cmd', 'status', 'output')
+_execution_error = _exec.ExecutionError('cmd', 'status', 'stdout', 'stderr')
 
 
 def test_up():
