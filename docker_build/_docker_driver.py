@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 import re
 
 from . import _exec
@@ -16,7 +15,7 @@ def _exec_docker_cmd(command, *args, **kwargs):
 def build(repotag, chdir=None):
     """Executes ``docker build``.
     """
-    output = _exec_docker_cmd('build', '--rm', '-t', repotag, '.', chdir=chdir)
+    output = _exec_docker_cmd('-D', 'build', '--rm', '-t', repotag, '.', chdir=chdir)
     match = re.search(r'Successfully built ([0-9a-fA-F]{12,})', output)
     if match:
         return match.group(1)
@@ -35,9 +34,8 @@ def commit(container_id, repotag=None):
 
 
 def import_(filename):
-    # raise IOError if file does not exist
-    os.path.getsize(filename)
-    return _exec_docker_cmd('import', '-', stdin=filename)
+    f_obj = open(filename, 'rb')
+    return _exec_docker_cmd('import', '-', stdin=f_obj)
 
 
 def inspect(container_id, format=None):
@@ -62,7 +60,9 @@ def inspect(container_id, format=None):
 
 
 def inspect_id(what):
-    return inspect(what, '{{.Id}}').strip()
+    image_id = inspect(what, '{{.Id}}')
+    if image_id:
+        return image_id.strip()
 
 
 def login(registry, username, password, email=' '):

@@ -49,13 +49,13 @@ def _readerthread(fh, logger, out):
 
 
 def _communicate(popen, stdin=None):
-    logger = None
-
     stdout = []
     stderr = []
 
+    logger = lambda v: _log.debug('[stdout] %s', v)
     stdout_thread = threading.Thread(target=_readerthread,
                                      args=(popen.stdout, logger, stdout))
+    logger = lambda v: _log.debug('[stderr] %s', v)
     stderr_thread = threading.Thread(target=_readerthread,
                                      args=(popen.stderr, logger, stderr))
 
@@ -84,17 +84,21 @@ def _communicate(popen, stdin=None):
 
 
 def exec_cmd(binary, *command_args, **kwargs):
-    #chdir = kwargs.get('chdir', None)
-    can_fail = kwargs.get('can_fail', False)
-    stdin = kwargs.get('stdin', None)
+    change_dir = kwargs.pop('chdir', None)
+    can_fail = kwargs.pop('can_fail', False)
+    stdin = kwargs.pop('stdin', None)
+    assert not kwargs, kwargs
 
     stdin_pipe = subprocess.PIPE if stdin else None
+    command = [binary] + list(command_args)
+    _log.debug(' '.join(command))
     try:
-        popen = subprocess.Popen([binary] + list(command_args),
-                                 close_fds=True,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE,
-                                 stdin=stdin_pipe)
+        with chdir(change_dir):
+            popen = subprocess.Popen(command,
+                                     close_fds=True,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     stdin=stdin_pipe)
     except os.error as error:
         status = -1
         stdout = None
@@ -109,7 +113,7 @@ def exec_cmd(binary, *command_args, **kwargs):
         raise ExecutionError(binary, status, stdout, stderr)
 
     if can_fail:
-        return status, output
+        return status, stdout
 
     return stdout
 
