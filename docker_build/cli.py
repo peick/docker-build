@@ -9,7 +9,6 @@ import tempfile
 import logging
 
 from .image.api import ImageCollection
-from ._exec import ExecutionError
 from ._registry import RegistryCollection
 from ._image_builder import ImageBuilder
 from ._load_config import (
@@ -87,6 +86,7 @@ def _get_cli_arguments(args=None):
 def _fix_default_cli_arguments(options):
     if not options.registry_config:
         for path in _REGISTRY_FILENAME:
+            path = os.path.expanduser(path)
             if os.path.exists(path):
                 options.registry_config.append(path)
                 break
@@ -101,6 +101,10 @@ def _configure_logging(options):
         level = logging.WARN
     log_format = '%(asctime)-15s [%(levelname)s] %(message)s'
     logging.basicConfig(level=level, format=log_format)
+
+
+class CLIError(Exception):
+    pass
 
 
 def main(args=None):
@@ -127,6 +131,7 @@ def main(args=None):
 
             # optional: load registries
             for filename in options.registry_config:
+                _log.debug('loading registry file: %s', filename)
                 bound_load_registry_config_file(filename)
 
             # optional: load registries directly from command line
@@ -137,7 +142,11 @@ def main(args=None):
 
             if options.registry_list_images:
                 # variables are injected into builtins
-                registry = __builtins__[options.registry_list_images]
+                try:
+                    registry = __builtins__[options.registry_list_images]
+                except KeyError:
+                    raise CLIError("Registry %s not found" \
+                        % options.registry_list_images)
                 for repotag in registry.images():
                     print(repotag)
                 return
@@ -153,6 +162,9 @@ def main(args=None):
                 bound_load_config_file(options.dockerbuild)
 
     except FormattedException as error:
+        _log.error(error.args[0])
+        sys.exit(1)
+    except CLIError as error:
         _log.error(error.args[0])
         sys.exit(1)
     except IOError as error:
